@@ -3,7 +3,7 @@
 **youmindian 是一个连接 YouMind 云端 AI 与本地 Obsidian Vault 的桥梁插件。**  
 YouMind Agent 在云端思考，插件负责把结果安全地落到本地 Vault。
 
-## 一句话定义
+## WHAT
 
 **youmindian = YouMind 的云端大脑 + Obsidian 的本地文件系统 + 插件桥梁层。**
 
@@ -13,7 +13,7 @@ YouMind Agent 在云端思考，插件负责把结果安全地落到本地 Vault
 - 本地插件可以把 AI 的意图安全地落地到 Obsidian Vault
 - 用户既能把本地内容推送到 YouMind，也能把云端内容拉回 Obsidian
 
-## 为什么需要这个插件
+## WHY
 
 ### YouMind 的本质
 
@@ -38,7 +38,7 @@ Obsidian 是一个**本地优先的私人知识库**，它擅长：
 
 它的局限是：**它没有原生的云端 AI 工作室能力。**
 
-### 我们要解决的问题
+### WANT
 
 这个插件想解决的，就是把两者真正连起来：
 
@@ -50,7 +50,7 @@ Obsidian 是一个**本地优先的私人知识库**，它擅长：
 
 ### 总体思路
 
-整体上，我们采用的是 **Bridge Layer（桥梁层）** 架构：
+整体上，我采用的是 **Bridge Layer（桥梁层）** 架构：
 
 1. YouMind Agent 在云端思考、规划、调用云端工具
 2. 插件通过 OpenAPI 与云端交互
@@ -98,9 +98,11 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 | 云端工具 | 有限 | 搜索 / 生图 / 生视频 / Research / Skills |
 | 依赖 | 需要本地 CLI | 只需 API Key |
 
-一句话概括：
+总之，
 
-**Claudian 是“把 AI 请到你家里来干活”，youmindian 是“用家里的遥控器调度整个云端 AI 工厂”。**
+**如果Claudian 是“把员工外派到你家里来干活”，youmindian则是“把公司和员工都搬到家里”。**
+
+虽然听起来听畜的
 
 ## 当前实现状态
 
@@ -140,6 +142,8 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 - assistant 回复正文需要优先从 `blocks[].data` 提取
 - chat 类请求对外统一使用 `snake_case` 字段更稳妥
 - 当前外部 OpenAPI 以现有 POST 接口为主，而不是 RESTful `/chats/...` 资源路径
+
+实现强调，目前插件并未上线，都在调试阶段
 
 ## 5 分钟快速上手
 
