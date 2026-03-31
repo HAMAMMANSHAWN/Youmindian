@@ -1314,3 +1314,831 @@
 	justify-content: flex-end;
 	gap: 8px;
 }
+
+/* ============================================
+   Browser View
+   ============================================ */
+
+.youmind-browser {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.youmind-browser-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.youmind-browser-board-info {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.youmind-browser-board-icon,
+.youmind-browser-preview-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.youmind-browser-board-icon svg,
+.youmind-browser-preview-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.youmind-browser-board-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--font-ui-small);
+	font-weight: 600;
+}
+
+.youmind-browser-refresh {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	color: var(--text-muted);
+	padding: 4px;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+}
+
+.youmind-browser-refresh:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.youmind-browser-refresh svg {
+	width: 16px;
+	height: 16px;
+}
+
+.youmind-browser-refresh.is-spinning svg {
+	animation: youmind-spin 1s linear infinite;
+}
+
+.youmind-browser-tabs {
+	display: flex;
+	padding: 0 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.youmind-browser-tab {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 12px;
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+}
+
+.youmind-browser-tab:hover {
+	color: var(--text-normal);
+}
+
+.youmind-browser-tab.is-active {
+	color: var(--text-normal);
+	border-bottom-color: var(--interactive-accent);
+}
+
+.youmind-browser-tab svg {
+	width: 14px;
+	height: 14px;
+}
+
+.youmind-browser-tab-count {
+	min-width: 18px;
+	padding: 0 5px;
+	border-radius: var(--radius-s);
+	background: var(--background-modifier-hover);
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	text-align: center;
+}
+
+.youmind-browser-list {
+	flex: 1 1 0;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 4px 0;
+}
+
+.youmind-browser-list::-webkit-scrollbar {
+	width: 4px;
+}
+
+.youmind-browser-list::-webkit-scrollbar-thumb {
+	background: var(--background-modifier-border);
+	border-radius: 4px;
+}
+
+.youmind-browser-loading,
+.youmind-browser-empty,
+.youmind-browser-error {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 32px 16px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	text-align: center;
+}
+
+.youmind-browser-loading svg,
+.youmind-browser-empty svg,
+.youmind-browser-error svg {
+	width: 24px;
+	height: 24px;
+}
+
+.youmind-browser-loading svg {
+	animation: youmind-spin 1s linear infinite;
+}
+
+.youmind-browser-error svg {
+	color: var(--text-error, var(--text-accent));
+}
+
+.youmind-browser-item,
+.youmind-browser-group {
+	padding-left: calc(var(--youmind-browser-depth, 0) * 14px);
+	padding-right: 8px;
+}
+
+.youmind-browser-item-row,
+.youmind-browser-group-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 8px;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+}
+
+.youmind-browser-item-row:hover,
+.youmind-browser-group-header:hover {
+	background: var(--background-modifier-hover);
+}
+
+.youmind-browser-item-row.is-selected {
+	background: var(--background-modifier-hover);
+	outline: 1px solid var(--background-modifier-border);
+}
+
+.youmind-browser-item-icon,
+.youmind-browser-group-chevron,
+.youmind-browser-group-icon {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+
+.youmind-browser-item-icon svg,
+.youmind-browser-group-chevron svg,
+.youmind-browser-group-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.youmind-browser-item-title,
+.youmind-browser-group-title,
+.youmind-browser-preview-title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--font-ui-small);
+}
+
+.youmind-browser-item-status {
+	display: flex;
+	align-items: center;
+	color: var(--interactive-accent);
+}
+
+.youmind-browser-item-status svg {
+	width: 12px;
+	height: 12px;
+}
+
+.youmind-browser-item-actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.youmind-browser-item-row:hover .youmind-browser-item-actions {
+	opacity: 1;
+}
+
+.youmind-browser-item-actions button,
+.youmind-browser-preview-close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	color: var(--text-muted);
+	padding: 2px;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+}
+
+.youmind-browser-item-actions button:hover,
+.youmind-browser-preview-close:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.youmind-browser-item-actions svg,
+.youmind-browser-preview-close svg {
+	width: 14px;
+	height: 14px;
+}
+
+.youmind-browser-group-count {
+	flex-shrink: 0;
+	padding: 0 5px;
+	border-radius: var(--radius-s);
+	background: var(--background-modifier-hover);
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
+.youmind-browser-group-children {
+	display: flex;
+	flex-direction: column;
+}
+
+.youmind-browser-group-action {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-muted);
+	padding: 2px;
+	border-radius: var(--radius-s);
+	display: flex;
+	align-items: center;
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+.youmind-browser-group-header:hover .youmind-browser-group-action {
+	opacity: 1;
+}
+
+.youmind-browser-group-action:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+.youmind-browser-group-action svg {
+	width: 14px;
+	height: 14px;
+}
+
+.youmind-browser-resizer {
+	height: 6px;
+	flex-shrink: 0;
+	display: none;
+	position: relative;
+	cursor: ns-resize;
+	background: transparent;
+}
+
+.youmind-browser-resizer::after {
+	content: '';
+	position: absolute;
+	left: 25%;
+	right: 25%;
+	top: 50%;
+	height: 2px;
+	border-radius: 1px;
+	background: var(--background-modifier-border);
+	transform: translateY(-50%);
+	transition: background 0.15s ease;
+}
+
+.youmind-browser-resizer:hover::after,
+.youmind-browser-resizer.is-dragging::after {
+	background: var(--interactive-accent);
+}
+
+body.youmind-resizing {
+	cursor: ns-resize !important;
+	user-select: none !important;
+}
+
+.youmind-browser-preview {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px;
+	min-height: 80px;
+	overflow: hidden;
+	background: var(--background-secondary);
+	flex-shrink: 0;
+}
+
+.youmind-browser-preview-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.youmind-browser-preview-body {
+	font-size: var(--font-ui-small);
+	line-height: 1.6;
+	word-break: break-word;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.youmind-browser-preview-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding-bottom: max(8px, var(--status-bar-height, 28px));
+}
+
+.youmind-browser-preview-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--interactive-normal);
+	color: var(--text-normal);
+	cursor: pointer;
+	font-size: var(--font-ui-small);
+	font-family: var(--font-interface);
+	white-space: nowrap;
+}
+
+.youmind-browser-preview-btn:hover {
+	background: var(--interactive-hover);
+}
+
+.youmind-browser-preview-btn-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.youmind-browser-preview-btn-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* ============================================
+   Preview — Markdown
+   ============================================ */
+
+.youmind-browser-preview-body p {
+	margin: 0.4em 0;
+}
+
+.youmind-browser-preview-body h1,
+.youmind-browser-preview-body h2,
+.youmind-browser-preview-body h3,
+.youmind-browser-preview-body h4 {
+	margin: 0.6em 0 0.3em;
+	font-size: 1em;
+	font-weight: 600;
+}
+
+.youmind-browser-preview-body h1 {
+	font-size: 1.2em;
+}
+
+.youmind-browser-preview-body h2 {
+	font-size: 1.1em;
+}
+
+.youmind-browser-preview-body pre {
+	font-size: 0.85em;
+	padding: 6px 8px;
+	border-radius: 4px;
+	overflow-x: auto;
+}
+
+.youmind-browser-preview-body blockquote {
+	margin: 0.4em 0;
+	padding-left: 10px;
+	border-left: 2px solid var(--text-faint);
+	color: var(--text-muted);
+}
+
+.youmind-browser-preview-body ul,
+.youmind-browser-preview-body ol {
+	margin: 0.3em 0;
+	padding-left: 1.5em;
+}
+
+/* ============================================
+   Preview — Image
+   ============================================ */
+
+.youmind-preview-image-container {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	padding: 4px 0;
+}
+
+.youmind-preview-image-container img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+	border-radius: 4px;
+}
+
+.youmind-preview-image-container.is-error {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 80px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.youmind-preview-image-desc {
+	padding: 8px 0 0;
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+/* ============================================
+   Preview — Media
+   ============================================ */
+
+.youmind-preview-source-bar {
+	padding: 0 0 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	margin-bottom: 8px;
+}
+
+.youmind-preview-source-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 6px;
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	font-size: var(--font-ui-smaller);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.youmind-preview-source-btn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.youmind-preview-source-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+.youmind-preview-media-content {
+	flex: 1;
+	min-height: 0;
+}
+
+.youmind-preview-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 60px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+/* ============================================
+   Preview — Fallback
+   ============================================ */
+
+.youmind-preview-fallback {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 24px 16px;
+	min-height: 120px;
+}
+
+.youmind-preview-fallback-icon {
+	color: var(--text-faint);
+}
+
+.youmind-preview-fallback-icon svg {
+	width: 36px;
+	height: 36px;
+}
+
+.youmind-preview-fallback-title {
+	font-weight: 500;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	text-align: center;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.youmind-preview-fallback-type {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+	letter-spacing: 0.5px;
+}
+
+.youmind-preview-fallback-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 14px;
+	border-radius: 6px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-size: var(--font-ui-small);
+	text-decoration: none;
+	cursor: pointer;
+	margin-top: 4px;
+}
+
+.youmind-preview-fallback-btn:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.youmind-preview-fallback-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* ============================================
+   Pull Confirm Panel
+   ============================================ */
+
+.youmind-pull-confirm {
+	position: fixed;
+	top: 16px;
+	right: 16px;
+	z-index: 9999;
+	width: min(360px, calc(100vw - 32px));
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	box-shadow: var(--shadow-s);
+	padding: 12px 16px;
+	animation: youmind-pull-fade-in 200ms ease-out;
+	font-size: var(--font-ui-small);
+}
+
+.youmind-pull-confirm.is-closing {
+	animation: youmind-pull-fade-out 200ms ease-in forwards;
+}
+
+@keyframes youmind-pull-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes youmind-pull-fade-out {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	to {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+}
+
+.youmind-pull-confirm-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+
+.youmind-pull-confirm-icon {
+	flex-shrink: 0;
+	color: var(--text-success, var(--interactive-accent));
+}
+
+.youmind-pull-confirm-icon svg {
+	width: 18px;
+	height: 18px;
+}
+
+.youmind-pull-confirm-label {
+	flex: 1;
+	font-weight: 500;
+	color: var(--text-normal);
+}
+
+.youmind-pull-confirm-close {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-muted);
+	padding: 2px;
+	border-radius: var(--radius-s);
+}
+
+.youmind-pull-confirm-close:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.youmind-pull-confirm-close svg {
+	width: 14px;
+	height: 14px;
+}
+
+.youmind-pull-confirm-path-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.youmind-pull-confirm-path-btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	padding: 6px 10px;
+	cursor: pointer;
+	flex: 1;
+	min-width: 0;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+
+.youmind-pull-confirm-path-btn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.youmind-pull-confirm-folder-icon,
+.youmind-pull-confirm-chevron,
+.youmind-pull-confirm-folder-item-icon,
+.youmind-pull-confirm-folder-check {
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+
+.youmind-pull-confirm-folder-icon svg,
+.youmind-pull-confirm-chevron svg,
+.youmind-pull-confirm-folder-item-icon svg,
+.youmind-pull-confirm-folder-check svg,
+.youmind-pull-confirm-open-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+.youmind-pull-confirm-path-text,
+.youmind-pull-confirm-folder-item-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.youmind-pull-confirm-path-btn.is-open .youmind-pull-confirm-chevron {
+	transform: rotate(180deg);
+}
+
+.youmind-pull-confirm-open-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: var(--radius-s);
+	padding: 6px 12px;
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.youmind-pull-confirm-open-btn:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.youmind-pull-confirm-dropdown {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	margin-bottom: 8px;
+	max-height: 280px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.youmind-pull-confirm-search {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.youmind-pull-confirm-search svg {
+	width: 14px;
+	height: 14px;
+	color: var(--text-muted);
+	flex-shrink: 0;
+}
+
+.youmind-pull-confirm-search input {
+	border: none;
+	background: none;
+	outline: none;
+	flex: 1;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+
+.youmind-pull-confirm-folder-list {
+	overflow-y: auto;
+	max-height: 220px;
+}
+
+.youmind-pull-confirm-folder-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	cursor: pointer;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+
+.youmind-pull-confirm-folder-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.youmind-pull-confirm-folder-item.is-current {
+	background: var(--background-secondary);
+}
+
+.youmind-pull-confirm-folder-check {
+	margin-left: auto;
+}
+
+.youmind-pull-confirm-folder-check svg {
+	color: var(--text-success, var(--interactive-accent));
+}
+
+.youmind-pull-confirm-folder-item.is-loading .youmind-pull-confirm-folder-item-icon svg {
+	animation: youmind-spin 1s linear infinite;
+}
+
+.youmind-pull-confirm-timer {
+	text-align: right;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}

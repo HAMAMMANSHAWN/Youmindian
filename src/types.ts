@@ -2,7 +2,8 @@ import type { App } from 'obsidian';
 import type { Board } from './api';
 
 export const VIEW_TYPE_YOUMIND_CHAT = 'youmind-chat-view';
-export const DEFAULT_CHAT_TITLE = 'YouMind';
+export const VIEW_TYPE_YOUMIND_BROWSER = 'youmind-browser-view';
+export const DEFAULT_CHAT_TITLE = 'youmindian';
 export const HISTORY_PAGE_SIZE = 20;
 export const DEFAULT_SYNC_ROOT = 'youmind';
 
@@ -37,6 +38,23 @@ export interface BoardInfo {
 	name: string;
 	iconName?: string;
 	iconColor?: string;
+}
+
+export interface TreeNode {
+	id: string;
+	type: 'group' | 'material' | 'craft';
+	title: string;
+	icon: string;
+	entityType?: string;
+	craftType?: string;
+	children?: TreeNode[];
+	isLinked: boolean;
+	localPath?: string;
+	isPullable: boolean;
+	updatedAt: string;
+	contentPreview?: string;
+	url?: string;
+	expanded?: boolean;
 }
 
 export interface SaveConfirmOptions {

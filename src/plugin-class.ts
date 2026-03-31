@@ -1,11 +1,17 @@
 import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf, setIcon } from 'obsidian';
 import { YouMindAPI } from './api';
 import { BoardContext } from './board-context';
+import { BrowserView } from './browser-view';
 import { YouMindChatView } from './chat-view';
 import { FrontmatterManager, type SyncStatus } from './frontmatter-manager';
 import { pushCurrentNoteToYouMind, pushFileToYouMind, showPushSuccessPanel } from './push-service';
 import { YouMindSettingTab } from './settings-tab';
-import { DEFAULT_SETTINGS, type YouMindSettings, VIEW_TYPE_YOUMIND_CHAT } from './types';
+import {
+	DEFAULT_SETTINGS,
+	type YouMindSettings,
+	VIEW_TYPE_YOUMIND_BROWSER,
+	VIEW_TYPE_YOUMIND_CHAT,
+} from './types';
 
 export default class YouMindPlugin extends Plugin {
 	settings!: YouMindSettings;
@@ -30,16 +36,27 @@ export default class YouMindPlugin extends Plugin {
 		);
 
 		this.registerView(VIEW_TYPE_YOUMIND_CHAT, (leaf) => new YouMindChatView(leaf, this));
+		this.registerView(VIEW_TYPE_YOUMIND_BROWSER, (leaf) => new BrowserView(leaf, this));
 
-		this.addRibbonIcon('message-circle', 'Open YouMind Chat', () => {
+		this.addRibbonIcon('message-circle', 'Open youmindian', () => {
 			void this.activateView();
+		});
+		this.addRibbonIcon('library', 'Open Board Content Browser', () => {
+			void this.activateBrowserView();
 		});
 
 		this.addCommand({
 			id: 'open-youmind-chat',
-			name: 'Open YouMind Chat',
+			name: 'Open youmindian',
 			callback: () => {
 				void this.activateView();
+			},
+		});
+		this.addCommand({
+			id: 'open-youmind-browser',
+			name: 'Open Board Content Browser',
+			callback: () => {
+				void this.activateBrowserView();
 			},
 		});
 
@@ -125,6 +142,31 @@ export default class YouMindPlugin extends Plugin {
 		if (leaf) {
 			workspace.revealLeaf(leaf);
 		}
+	}
+
+	async activateBrowserView(): Promise<void> {
+		const { workspace } = this.app;
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_YOUMIND_BROWSER)[0] ?? null;
+
+		if (!leaf) {
+			leaf = workspace.getRightLeaf(false);
+			await leaf?.setViewState({
+				type: VIEW_TYPE_YOUMIND_BROWSER,
+				active: true,
+			});
+		}
+
+		if (leaf) {
+			workspace.revealLeaf(leaf);
+		}
+	}
+
+	getCurrentBoardId(): string | null {
+		return this.boardContext.getBoardId();
+	}
+
+	getCurrentBoardName(): string | null {
+		return this.boardContext.getBoard()?.name ?? null;
 	}
 
 	private refreshPushAction(view?: MarkdownView | null): void {

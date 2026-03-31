@@ -89,7 +89,7 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 
 ## 与 Claudian 的区别
 
-| 维度 | Claudian | YouMind for Obsidian |
+| 维度 | Claudian | youmindian |
 | --- | --- | --- |
 | AI 运行位置 | 本地 CLI / Agent SDK | 云端 YouMind API |
 | 本地文件操作 | Agent 直接执行 | 插件桥梁层执行 |
@@ -100,7 +100,7 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 
 一句话概括：
 
-**Claudian 是“把 AI 请到你家里来干活”，YouMind for Obsidian 是“用家里的遥控器调度整个云端 AI 工厂”。**
+**Claudian 是“把 AI 请到你家里来干活”，youmindian 是“用家里的遥控器调度整个云端 AI 工厂”。**
 
 ## 当前实现状态
 
@@ -118,6 +118,17 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 - Chat History Panel（左侧滑入）
 - `listChats` / `getChat` / `listMessages` 对话恢复
 - 本地隐藏历史会话（`hiddenChatIds`）
+- 消息保存菜单拆分：`Save to Vault` / `Save as YouMind Note`
+- `createNote` / `updateNote` 推送链路
+- `listMaterials` / `listCrafts` API 基础接入
+- 当前笔记 Push 入口（命令面板 / 文件管理器 / 编辑器状态按钮）
+- frontmatter 关联与同步状态判断（`unlinked` / `synced` / `modified`）
+- 保存成功确认浮层（支持查看目标 Board、切换 Board、打开 YouMind）
+- Board Content Browser（Materials / Crafts 树）
+- Preview Panel 类型化预览（Markdown / 图片 / 媒体 / Fallback）
+- Pull to Vault（Material / Craft 拉取为本地 Markdown）
+- Pull 完成确认浮层（支持查看路径、移动到其他文件夹）
+- 图片 Material 本地下载与正文内联图片本地化
 - 提交前敏感信息检查脚本
 
 ### 已验证的重要 API 结论
@@ -141,27 +152,28 @@ npm run dev
 将插件目录放到：
 
 ```text
-<Vault>/.obsidian/plugins/youmind-obsidian/
+<Vault>/.obsidian/plugins/youmindian/
 ```
 
 然后在 Obsidian 中：
 
 - 打开 **Settings → Community plugins**
-- 启用 **YouMind**
+- 启用 **youmindian**
 - 使用 **Cmd+P → Reload app without saving** 重新加载
 
 ### 3. 配置 API Key
 
 打开：
 
-- **Settings → YouMind**
+- **Settings → youmindian**
 
-填入你的 YouMind API Key，然后点击 **Validate API key**。
+填入你的 YouMind API Key，然后点击 **Validate API key**。  
+可在 [https://youmind.com/settings/api-keys](https://youmind.com/settings/api-keys) 获取或管理 API Key。
 
 ### 4. 打开聊天面板
 
 - 点击左侧 ribbon 图标
-- 或使用命令 **Open YouMind Chat**
+- 或使用命令 **Open youmindian**
 
 ### 5. 体验当前核心功能
 
@@ -171,6 +183,11 @@ npm run dev
 - 切换模型
 - 切换 Board 上下文
 - 打开历史对话面板并恢复旧会话
+- 浏览当前 Board 下的 Materials / Crafts，并按类型预览内容
+- 将 Material / Craft Pull 到本地 Vault，自动建立 frontmatter 关联
+- 将消息保存到本地 Vault 或双写为 YouMind Note
+- 将当前笔记推送到 YouMind，并查看同步状态
+- 在 Pull 图片、Article、PDF 时尽量将图片落到本地附件目录
 
 ## 界面导览
 
@@ -243,12 +260,42 @@ npm run dev
 - 支持本地隐藏会话，不删除云端记录
 - 保持与 Board 切换行为一致：切换 Board 后当前对话立即 reset
 
+### Phase 1.3：内容双向流动基础能力
+
+- 消息保存动作拆分为 `Save to Vault` 和 `Save as YouMind Note`
+- 打通 `createNote` / `updateNote`，支持消息双写和当前笔记 Push
+- 增加 `youmind_source` 与 frontmatter 关联字段，建立本地文件和云端实体追踪基础
+- 实现 `getSyncStatus(file)`，区分 `unlinked` / `synced` / `modified`
+- 提供 3 个 Push 入口：命令面板、文件管理器右键、编辑器状态按钮
+- 新增保存确认浮层，支持查看目标 Board、切换 Board、跳转 YouMind
+- 补齐 `listMaterials` / `listCrafts` API，为后续 Browser / Pull 能力铺路
+
+### Phase 1.3.2：Board Content Browser
+
+- 新增 Browser View，按当前 Board 展示 Materials / Crafts 树
+- 支持分组展开、图标映射、基础搜索与刷新
+- 增加 Preview Panel，为后续 Pull 与类型化预览打基础
+
+### Phase 1.3.3：Pull to Vault
+
+- 修复 Browser View 分组标题、Preview Panel 截断与不可拖拽等问题
+- Preview Panel 按类型分发渲染：文本走 Markdown，图片直接预览，媒体显示摘要与转录
+- 打通 `getMaterial` / `getCraft` 到本地 Markdown 的转换链路
+- 新增 Pull to Vault，支持将 Material / Craft 拉取到 Vault 并写入 frontmatter 关联
+- 新增 Pull Confirm Panel，拉取后可查看目标路径并移动到 Vault 内其他文件夹
+
+### Phase 1.3.4：图片本地下载增强
+
+- Pull 图片类 Material 时，优先下载到 Vault 本地附件目录并改写为相对路径引用
+- 处理 Article / PDF 正文中的远程内联图片，尽量同步为本地附件
+- 下载失败时静默回退到远程 URL，不中断整体 Pull 流程
+
 ## 当前文件结构
 
-当前仓库仍然是 **flat 结构**，不是最终目标架构：
+当前仓库仍然是 **flat 结构**，不是最终目标架构。仓库目录当前也仍是 `youmindian/`：
 
 ```text
-youmind-obsidian/
+youmindian/
 ├── main.ts
 ├── api.ts
 ├── styles.css
@@ -373,22 +420,16 @@ npm run build
 
 ## 近期路线图
 
-### Phase 1.3
-
-- Material Browser
-- Board 素材树与预览
-- Pull to Vault
-
 ### Phase 1.4
-
-- Push current note to YouMind
-- `createDocumentByMarkdown` / `createNote`
-- frontmatter 关联与增量更新
-
-### Phase 1.5
 
 - `@` 引用系统
 - YouMind / Vault 双源引用
+- frontmatter 关联的继续完善
+- 本地文件与云端实体的移动 / 更新同步细节
+
+### Phase 1.5
+- Semantic Search
+- Smart Context
 
 ### Phase 2+
 
@@ -404,7 +445,7 @@ npm run build
 
 **让用户在任何设备上使用 YouMind 的云端 AI，同时把结果可靠、安全地落到本地 Obsidian Vault。**
 
-当桥梁层、权限系统、双向同步和远程指令能力成熟后，YouMind for Obsidian 会成为：
+当桥梁层、权限系统、双向同步和远程指令能力成熟后，youmindian 会成为：
 
 - 云端 AI 的本地执行器
 - 本地知识库的云端增强层

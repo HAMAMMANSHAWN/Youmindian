@@ -1,4 +1,4 @@
-# YouMind for Obsidian
+# youmindian
 
 An Obsidian plugin that bridges YouMind's cloud AI with the local Obsidian vault.  
 YouMind Agent thinks in the cloud; the plugin executes locally.
@@ -18,7 +18,7 @@ Key difference from Claudian:
 - Plugin acts as a bridge: receives intent and executes locally with permission checks.
 - Supports Claude, GPT-5, Gemini, DeepSeek.
 
-One-liner: Claudian = invite AI into your house; YouMind for Obsidian = a remote control in your house that commands a cloud AI factory.
+One-liner: Claudian = invite AI into your house; youmindian = a remote control in your house that commands a cloud AI factory.
 
 ---
 
@@ -178,7 +178,7 @@ Example:
 ### Current repository shape
 
 ```plaintext
-youmind-obsidian/
+youmindian/
 ├── main.ts
 ├── api.ts
 ├── styles.css
@@ -351,7 +351,7 @@ Completed:
 
 ## 12. Capability Comparison
 
-| Dimension | Claudian | YouMind for Obsidian |
+| Dimension | Claudian | youmindian |
 | --- | --- | --- |
 | AI location | Local CLI | Cloud API |
 | Models | Claude | Claude / GPT-5 / Gemini / DeepSeek |

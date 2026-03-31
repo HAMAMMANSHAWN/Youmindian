@@ -12,7 +12,7 @@ export class YouMindSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl('h2', { text: 'YouMind settings' });
+		containerEl.createEl('h2', { text: 'youmindian settings' });
 
 		new Setting(containerEl)
 			.setName('API key')

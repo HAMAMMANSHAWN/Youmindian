@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "youmindian",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "youmindian — bridge YouMind cloud AI with the local Obsidian vault",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

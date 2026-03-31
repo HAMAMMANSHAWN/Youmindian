@@ -37,7 +37,7 @@ export class YouMindChatView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'YouMind Chat';
+		return 'youmindian';
 	}
 
 	getIcon(): string {

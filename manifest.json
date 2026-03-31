@@ -1,9 +1,9 @@
 {
-	"id": "youmind-obsidian",
-	"name": "YouMind",
+	"id": "youmindian",
+	"name": "youmindian",
 	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "YouMind AI 知识库 Obsidian 插件 — 在侧边栏与 AI 对话、搜索知识库、浏览 Boards。",
+	"description": "youmindian — 连接 YouMind 云端 AI 与本地 Obsidian Vault 的桥梁插件。",
 	"author": "hammanshawn",
 	"isDesktopOnly": false
 }
