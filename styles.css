@@ -6,14 +6,20 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	min-height: 0;
 	overflow: hidden;
 	position: relative;
 }
 
 .youmind-content-wrapper {
-	flex: 1;
+	flex: 1 1 0;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
 	position: relative;
 	overflow: hidden;
+	user-select: text;
+	-webkit-user-select: text;
 }
 
 .youmind-header {
@@ -115,12 +121,21 @@
 }
 
 .youmind-messages {
-	flex: 1;
+	flex: 1 1 0;
+	min-height: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
 	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
 	padding: 16px 12px;
+	user-select: text;
+	-webkit-user-select: text;
+}
+
+.youmind-hidden {
+	display: none !important;
 }
 
 .youmind-messages::-webkit-scrollbar,
@@ -198,6 +213,44 @@
 	font-size: var(--font-ui-small);
 	line-height: 1.6;
 	color: var(--text-normal);
+	user-select: text;
+	-webkit-user-select: text;
+	cursor: text;
+}
+
+.youmind-message-user .youmind-message-content,
+.youmind-message-system .youmind-message-content {
+	user-select: text;
+	-webkit-user-select: text;
+	cursor: text;
+}
+
+.youmind-message-assistant .youmind-message-content::selection,
+.youmind-message-assistant .youmind-message-content *::selection,
+.youmind-message-system .youmind-message-content::selection,
+.youmind-message-system .youmind-message-content *::selection {
+	background: var(--text-selection);
+	color: inherit;
+}
+
+.youmind-message-assistant .youmind-message-content::-moz-selection,
+.youmind-message-assistant .youmind-message-content *::-moz-selection,
+.youmind-message-system .youmind-message-content::-moz-selection,
+.youmind-message-system .youmind-message-content *::-moz-selection {
+	background: var(--text-selection);
+	color: inherit;
+}
+
+.youmind-message-user .youmind-message-content::selection,
+.youmind-message-user .youmind-message-content *::selection {
+	background: var(--text-on-accent);
+	color: var(--interactive-accent);
+}
+
+.youmind-message-user .youmind-message-content::-moz-selection,
+.youmind-message-user .youmind-message-content *::-moz-selection {
+	background: var(--text-on-accent);
+	color: var(--interactive-accent);
 }
 
 .youmind-message-assistant .youmind-message-content p {
@@ -245,13 +298,52 @@
 }
 
 .youmind-message-actions {
-	display: none;
+	display: flex;
 	gap: 2px;
 	margin-top: 4px;
+	opacity: 0.35;
+	transition: opacity 0.15s ease;
 }
 
-.youmind-message:hover .youmind-message-actions {
+.youmind-message:hover .youmind-message-actions,
+.youmind-message:focus-within .youmind-message-actions {
+	opacity: 1;
+}
+
+.youmind-selection-toolbar {
+	position: absolute;
+	transform: translateX(-50%);
 	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+	z-index: calc(var(--layer-popover, 100) + 2);
+}
+
+.youmind-selection-toolbar-btn {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 8px;
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-normal);
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+}
+
+.youmind-selection-toolbar-btn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.youmind-selection-toolbar-btn svg {
+	width: 14px;
+	height: 14px;
 }
 
 .youmind-input-wrapper {
@@ -694,43 +786,18 @@
    History panel
    ============================================ */
 
-.ym-history-backdrop {
-	position: absolute;
-	inset: 0;
-	z-index: var(--layer-popover, 100);
-	background-color: rgba(0, 0, 0, 0);
-	transition: background-color 0.2s ease;
-	pointer-events: none;
-}
-
-.ym-history-backdrop.is-open {
-	background-color: rgba(0, 0, 0, 0.3);
-	pointer-events: auto;
-}
-
-.theme-dark .ym-history-backdrop.is-open {
-	background-color: rgba(0, 0, 0, 0.5);
-}
-
 .ym-history-panel {
 	position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	z-index: calc(var(--layer-popover, 100) + 1);
-	width: 300px;
-	max-width: 80%;
+	inset: 0;
+	z-index: 1;
+	width: min(360px, 100%);
 	display: flex;
 	flex-direction: column;
+	min-height: 0;
 	background-color: var(--background-primary);
 	border-right: 1px solid var(--background-modifier-border);
 	box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
-	transform: translateX(-100%);
-	transition: transform 0.2s ease;
-}
-
-.ym-history-panel.is-open {
-	transform: translateX(0);
+	pointer-events: auto;
 }
 
 .theme-dark .ym-history-panel {
@@ -827,7 +894,9 @@
 
 .ym-history-list {
 	flex: 1;
+	min-height: 0;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	padding: 4px 0;
 }
 

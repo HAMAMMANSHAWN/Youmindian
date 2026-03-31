@@ -13,7 +13,7 @@ PATTERN='ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]+|sk-ym-[A-Za-z0-9]{10,}|AI
 
 echo "Scanning tracked files for likely secrets..."
 
-if git grep -n -I -E "$PATTERN" -- . ':(exclude)package-lock.json'; then
+if git grep -n -I -E "$PATTERN" -- . ':(exclude)package-lock.json' ':(exclude)scripts/check-secrets.sh'; then
   echo
   echo "Potential sensitive content found. Remove or redact it before commit/push."
   exit 1

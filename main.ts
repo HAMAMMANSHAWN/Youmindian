@@ -2,6 +2,7 @@ import {
 	App,
 	ItemView,
 	MarkdownRenderer,
+	MarkdownView,
 	Modal,
 	Notice,
 	Plugin,
@@ -16,6 +17,7 @@ import {
 	type Chat,
 	type ChatListResponse,
 	type ChatMode,
+	type CreatePickParams,
 	type Message,
 	type SendMessageResponse,
 	YouMindAPI,
@@ -567,7 +569,6 @@ interface TimeGroup {
 
 class HistoryPanel {
 	private panelEl: HTMLElement | null = null;
-	private backdropEl: HTMLElement | null = null;
 	private listEl: HTMLElement | null = null;
 	private searchInputEl: HTMLInputElement | null = null;
 	private isOpen = false;
@@ -614,9 +615,6 @@ class HistoryPanel {
 		this.isOpen = true;
 		this.callbacks.onVisibilityChange?.(true);
 
-		this.backdropEl = this.containerEl.createDiv({ cls: 'ym-history-backdrop' });
-		this.backdropEl.addEventListener('click', () => this.close());
-
 		this.panelEl = this.containerEl.createDiv({ cls: 'ym-history-panel' });
 		const headerEl = this.panelEl.createDiv({ cls: 'ym-history-header' });
 		headerEl.createSpan({ cls: 'ym-history-title', text: 'Conversations' });
@@ -658,34 +656,19 @@ class HistoryPanel {
 
 		document.addEventListener('keydown', this.boundOnKeydown, true);
 
-		window.requestAnimationFrame(() => {
-			this.panelEl?.addClass('is-open');
-			this.backdropEl?.addClass('is-open');
-		});
-
 		await this.resetAndLoad();
-		window.setTimeout(() => this.searchInputEl?.focus(), 200);
+		window.setTimeout(() => this.searchInputEl?.focus(), 0);
 	}
 
 	close(): void {
 		if (!this.isOpen) {
+			this.forceCleanupDom();
 			return;
 		}
 		this.isOpen = false;
 		this.callbacks.onVisibilityChange?.(false);
-		this.panelEl?.removeClass('is-open');
-		this.backdropEl?.removeClass('is-open');
 		document.removeEventListener('keydown', this.boundOnKeydown, true);
-
-		window.setTimeout(() => {
-			this.listEl?.removeEventListener('scroll', this.boundOnScroll);
-			this.panelEl?.remove();
-			this.backdropEl?.remove();
-			this.panelEl = null;
-			this.backdropEl = null;
-			this.listEl = null;
-			this.searchInputEl = null;
-		}, 200);
+		this.forceCleanupDom();
 	}
 
 	toggle(): void {
@@ -860,8 +843,8 @@ class HistoryPanel {
 
 		if (!isActive) {
 			itemEl.addEventListener('click', async () => {
-				await this.callbacks.onSelectChat(chat.id);
 				this.close();
+				await this.callbacks.onSelectChat(chat.id);
 			});
 		}
 	}
@@ -927,6 +910,17 @@ class HistoryPanel {
 		if (this.listEl.scrollTop + this.listEl.clientHeight >= this.listEl.scrollHeight - threshold) {
 			void this.loadPage(this.currentPage + 1);
 		}
+	}
+
+	private forceCleanupDom(): void {
+		this.listEl?.removeEventListener('scroll', this.boundOnScroll);
+		this.panelEl?.remove();
+		this.containerEl.querySelectorAll('.ym-history-panel, .ym-history-backdrop').forEach((element) => {
+			element.remove();
+		});
+		this.panelEl = null;
+		this.listEl = null;
+		this.searchInputEl = null;
 	}
 
 	destroy(): void {
@@ -998,6 +992,8 @@ class YouMindChatView extends ItemView {
 	private textInput!: HTMLTextAreaElement;
 	private sendBtn!: HTMLButtonElement;
 	private titleEl!: HTMLElement;
+	private lastActiveMarkdownView: MarkdownView | null = null;
+	private selectionToolbarEl: HTMLElement | null = null;
 	private historyPanel: HistoryPanel | null = null;
 	private boardSelector: BoardSelector | null = null;
 	private currentChatId: string | null = null;
@@ -1031,6 +1027,17 @@ class YouMindChatView extends ItemView {
 		const container = this.containerEl.children[1] as HTMLElement;
 		container.empty();
 		container.addClass('youmind-chat-container');
+		this.trackMarkdownView(this.app.workspace.getActiveViewOfType(MarkdownView));
+		this.registerEvent(
+			this.app.workspace.on('active-leaf-change', (leaf) => {
+				this.trackMarkdownView(leaf?.view instanceof MarkdownView ? leaf.view : null);
+			}),
+		);
+		this.registerEvent(
+			this.app.workspace.on('file-open', () => {
+				this.trackMarkdownView(this.app.workspace.getActiveViewOfType(MarkdownView));
+			}),
+		);
 
 		const header = container.createEl('div', { cls: 'youmind-header' });
 		this.buildHeader(header);
@@ -1038,6 +1045,18 @@ class YouMindChatView extends ItemView {
 		this.contentWrapper = container.createEl('div', { cls: 'youmind-content-wrapper' });
 		this.messagesEl = this.contentWrapper.createEl('div', { cls: 'youmind-messages' });
 		this.showEmptyState();
+		this.registerDomEvent(this.messagesEl, 'mouseup', () => {
+			window.setTimeout(() => this.updateSelectionToolbar(), 0);
+		});
+		this.registerDomEvent(this.messagesEl, 'keyup', () => {
+			window.setTimeout(() => this.updateSelectionToolbar(), 0);
+		});
+		this.registerDomEvent(this.messagesEl, 'mousedown', () => {
+			this.hideSelectionToolbar();
+		});
+		this.registerDomEvent(document, 'selectionchange', () => {
+			this.handleSelectionChange();
+		});
 
 		const contextBar = container.createEl('div', { cls: 'ym-context-bar' });
 		this.boardSelector = new BoardSelector(contextBar, this.plugin.boardContext);
@@ -1076,6 +1095,7 @@ class YouMindChatView extends ItemView {
 			},
 			onVisibilityChange: (isOpen) => {
 				container.classList.toggle('youmind-history-open', isOpen);
+				this.messagesEl.toggleClass('youmind-hidden', isOpen);
 			},
 		});
 
@@ -1212,12 +1232,10 @@ class YouMindChatView extends ItemView {
 	private resetChat(focusInput = true): void {
 		this.currentChatId = null;
 		this.updateTitle(DEFAULT_CHAT_TITLE);
+		this.historyPanel?.close();
 		this.messagesEl.empty();
 		this.showEmptyState();
 		this.historyPanel?.setActiveChatId(null);
-		if (this.historyPanel?.getIsOpen()) {
-			this.historyPanel.close();
-		}
 		if (focusInput) {
 			this.textInput.focus();
 		}
@@ -1279,7 +1297,7 @@ class YouMindChatView extends ItemView {
 
 			const assistantMessage = this.findLatestAssistantMessage(response.messages);
 			if (assistantMessage) {
-				await this.addAssistantMessage(extractAssistantContent(assistantMessage));
+				await this.addAssistantMessage(extractAssistantContent(assistantMessage), assistantMessage.id);
 			} else {
 				this.addSystemMessage('No assistant reply received.', 'alert-circle');
 			}
@@ -1307,6 +1325,7 @@ class YouMindChatView extends ItemView {
 	}
 
 	private async resumeChat(chatId: string): Promise<void> {
+		this.historyPanel?.close();
 		this.currentChatId = chatId;
 		this.historyPanel?.setActiveChatId(chatId);
 		this.messagesEl.empty();
@@ -1322,16 +1341,23 @@ class YouMindChatView extends ItemView {
 			loadingEl.remove();
 			this.messagesEl.empty();
 
-			if (messagesResponse.messages.length === 0) {
+			const sortedMessages = [...messagesResponse.messages].sort((left, right) => {
+				const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+				const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+				return leftTime - rightTime;
+			});
+
+			if (sortedMessages.length === 0) {
 				this.showEmptyState();
 			} else {
-				for (const message of messagesResponse.messages) {
+				for (const message of sortedMessages) {
 					await this.renderMessage(message);
 				}
 			}
 
 			this.updateTitle(chat.title || DEFAULT_CHAT_TITLE);
 			this.scrollToBottom();
+			this.textInput.focus();
 		} catch (error) {
 			loadingEl.remove();
 			this.messagesEl.empty();
@@ -1346,43 +1372,339 @@ class YouMindChatView extends ItemView {
 		if (message.role === 'assistant') {
 			const content = extractAssistantContent(message);
 			if (content) {
-				await this.addAssistantMessage(content);
+				await this.addAssistantMessage(content, message.id);
 			}
 			return;
 		}
-		this.addUserMessage(message.content);
+		this.addUserMessage(message.content, message.id);
 	}
 
-	private addUserMessage(text: string): void {
+	private addUserMessage(text: string, messageId?: string): void {
 		const messageEl = this.messagesEl.createEl('div', {
 			cls: 'youmind-message youmind-message-user',
 		});
-		messageEl.createEl('div', {
+		if (messageId) {
+			messageEl.dataset.messageId = messageId;
+		}
+		const contentEl = messageEl.createEl('div', {
 			cls: 'youmind-message-content',
 			text,
 		});
+		this.addMessageActions(messageEl, text, contentEl.textContent ?? text, messageId);
 		this.scrollToBottom();
 	}
 
-	private async addAssistantMessage(markdown: string): Promise<void> {
+	private async addAssistantMessage(markdown: string, messageId?: string): Promise<void> {
 		const messageEl = this.messagesEl.createEl('div', {
 			cls: 'youmind-message youmind-message-assistant',
 		});
+		if (messageId) {
+			messageEl.dataset.messageId = messageId;
+		}
 		const contentEl = messageEl.createEl('div', { cls: 'youmind-message-content' });
 		await MarkdownRenderer.render(this.app, markdown, contentEl, '', this);
-
-		const actions = messageEl.createEl('div', { cls: 'youmind-message-actions' });
-		const copyBtn = actions.createEl('button', {
-			cls: 'youmind-icon-btn clickable-icon',
-			attr: { 'aria-label': 'Copy response' },
-		});
-		setIcon(copyBtn, 'copy');
-		copyBtn.addEventListener('click', async () => {
-			await navigator.clipboard.writeText(markdown);
-			new Notice('Copied to clipboard');
-		});
+		this.addMessageActions(messageEl, markdown, contentEl.textContent ?? markdown, messageId);
 
 		this.scrollToBottom();
+	}
+
+	private addMessageActions(messageEl: HTMLElement, rawText: string, plainText: string, messageId?: string): void {
+		const actions = messageEl.createEl('div', { cls: 'youmind-message-actions' });
+
+		const copyMarkdownBtn = actions.createEl('button', {
+			cls: 'youmind-icon-btn clickable-icon',
+			attr: { 'aria-label': 'Copy as Markdown' },
+		});
+		setIcon(copyMarkdownBtn, 'copy');
+		copyMarkdownBtn.addEventListener('click', async () => {
+			await navigator.clipboard.writeText(rawText);
+			new Notice('Copied as Markdown');
+		});
+
+		const copyTextBtn = actions.createEl('button', {
+			cls: 'youmind-icon-btn clickable-icon',
+			attr: { 'aria-label': 'Copy as text' },
+		});
+		setIcon(copyTextBtn, 'file-text');
+		copyTextBtn.addEventListener('click', async () => {
+			await navigator.clipboard.writeText(plainText);
+			new Notice('Copied as text');
+		});
+
+		const insertBtn = actions.createEl('button', {
+			cls: 'youmind-icon-btn clickable-icon',
+			attr: { 'aria-label': 'Insert into active note' },
+		});
+		setIcon(insertBtn, 'file-input');
+		insertBtn.addEventListener('click', () => {
+			const markdownView = this.resolveInsertTargetView();
+			const editor = markdownView?.editor;
+			if (!editor) {
+				new Notice('No note available to insert into');
+				return;
+			}
+			editor.replaceSelection(rawText);
+			new Notice(`Inserted into ${markdownView.file?.basename ?? 'note'}`);
+		});
+
+		const saveBtn = actions.createEl('button', {
+			cls: 'youmind-icon-btn clickable-icon',
+			attr: { 'aria-label': 'Save as note' },
+		});
+		setIcon(saveBtn, 'file-plus');
+		saveBtn.addEventListener('click', async () => {
+			const filePath = this.getAvailableNotePath(this.resolveNoteBaseName(rawText, plainText));
+			try {
+				await this.app.vault.create(filePath, rawText);
+				new Notice(`Saved as ${filePath}`);
+			} catch {
+				new Notice('Failed to save note');
+			}
+		});
+
+		const pickBtn = actions.createEl('button', {
+			cls: 'youmind-icon-btn clickable-icon',
+			attr: { 'aria-label': 'Save as Pick' },
+		});
+		setIcon(pickBtn, 'highlighter');
+		pickBtn.addEventListener('click', async () => {
+			await this.createPickForText({
+				raw: rawText,
+				plain: plainText,
+				messageId,
+				matchText: rawText,
+			});
+		});
+	}
+
+	private sanitizeFileName(value: string): string {
+		return value.replace(/[\\/:*?"<>|]/g, ' ').trim() || DEFAULT_CHAT_TITLE;
+	}
+
+	private trackMarkdownView(view: MarkdownView | null): void {
+		if (view?.editor && view.file) {
+			this.lastActiveMarkdownView = view;
+		}
+	}
+
+	private resolveInsertTargetView(): MarkdownView | null {
+		if (this.lastActiveMarkdownView?.editor && this.lastActiveMarkdownView.file) {
+			return this.lastActiveMarkdownView;
+		}
+		const activeMarkdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (activeMarkdownView?.editor && activeMarkdownView.file) {
+			return activeMarkdownView;
+		}
+		return null;
+	}
+
+	private resolveNoteBaseName(rawText: string, plainText: string): string {
+		const currentTitle = this.titleEl.getAttribute('title')?.trim();
+		if (currentTitle && currentTitle !== DEFAULT_CHAT_TITLE) {
+			return this.sanitizeFileName(currentTitle);
+		}
+
+		const headingMatch = rawText.match(/^\s{0,3}#{1,6}\s+(.+?)\s*$/m);
+		if (headingMatch?.[1]) {
+			return this.sanitizeFileName(headingMatch[1]);
+		}
+
+		const firstMeaningfulLine = plainText
+			.split('\n')
+			.map((line) => line.trim())
+			.find((line) => line.length > 0);
+		if (firstMeaningfulLine) {
+			return this.sanitizeFileName(firstMeaningfulLine.slice(0, 80));
+		}
+
+		return DEFAULT_CHAT_TITLE;
+	}
+
+	private async createPickForText(args: {
+		raw: string;
+		plain: string;
+		matchText: string;
+		messageId?: string;
+	}): Promise<void> {
+		const boardId = this.plugin.boardContext.getBoardId();
+		if (!boardId) {
+			new Notice('Please select a board first');
+			return;
+		}
+		if (!this.currentChatId) {
+			new Notice('Pick is only available for saved chat messages');
+			return;
+		}
+
+		const params: CreatePickParams = {
+			boardId,
+			content: {
+				raw: args.raw,
+				plain: args.plain,
+			},
+			source: {
+				entityType: 'chat',
+				entityId: this.currentChatId,
+				selection: {
+					matchText: args.matchText,
+					selectedBy: 'USER',
+					pickSelectionMessageId: args.messageId,
+				},
+				quote: {
+					raw: args.raw,
+					plain: args.plain,
+				},
+			},
+		};
+
+		try {
+			await this.plugin.api.createPick(params);
+			new Notice('Saved as Pick');
+		} catch (error) {
+			new Notice(`Failed to save Pick: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	}
+
+	private handleSelectionChange(): void {
+		const selection = window.getSelection();
+		if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+			this.hideSelectionToolbar();
+			return;
+		}
+
+		const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+		if (!range) {
+			this.hideSelectionToolbar();
+			return;
+		}
+
+		const commonNode =
+			range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+				? range.commonAncestorContainer.parentElement
+				: (range.commonAncestorContainer as HTMLElement | null);
+		if (!commonNode || !this.messagesEl.contains(commonNode)) {
+			this.hideSelectionToolbar();
+		}
+	}
+
+	private updateSelectionToolbar(): void {
+		const selection = window.getSelection();
+		if (!selection || selection.isCollapsed) {
+			this.hideSelectionToolbar();
+			return;
+		}
+
+		const selectedText = selection.toString().trim();
+		if (!selectedText) {
+			this.hideSelectionToolbar();
+			return;
+		}
+
+		const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+		if (!range) {
+			this.hideSelectionToolbar();
+			return;
+		}
+
+		const commonNode =
+			range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+				? range.commonAncestorContainer.parentElement
+				: (range.commonAncestorContainer as HTMLElement | null);
+		if (!commonNode || !this.messagesEl.contains(commonNode)) {
+			this.hideSelectionToolbar();
+			return;
+		}
+
+		const messageEl = commonNode.closest('.youmind-message') as HTMLElement | null;
+		const messageId = messageEl?.dataset.messageId;
+		const rect = range.getBoundingClientRect();
+		if (!rect.width && !rect.height) {
+			this.hideSelectionToolbar();
+			return;
+		}
+
+		const hostRect = this.contentWrapper.getBoundingClientRect();
+		const toolbar = this.ensureSelectionToolbar();
+		const top = Math.max(8, rect.top - hostRect.top - 40);
+		const left = Math.max(8, Math.min(rect.left - hostRect.left + rect.width / 2, hostRect.width - 8));
+		toolbar.style.top = `${top}px`;
+		toolbar.style.left = `${left}px`;
+		toolbar.dataset.messageId = messageId ?? '';
+		toolbar.dataset.selectionText = selectedText;
+		toolbar.removeClass('youmind-hidden');
+	}
+
+	private ensureSelectionToolbar(): HTMLElement {
+		if (this.selectionToolbarEl) {
+			return this.selectionToolbarEl;
+		}
+
+		const toolbar = this.contentWrapper.createEl('div', {
+			cls: 'youmind-selection-toolbar youmind-hidden',
+		});
+
+		const pickBtn = toolbar.createEl('button', {
+			cls: 'youmind-selection-toolbar-btn clickable-icon',
+			attr: { 'aria-label': '摘录' },
+		});
+		setIcon(pickBtn, 'highlighter');
+		pickBtn.createSpan({ text: '摘录' });
+		pickBtn.addEventListener('mousedown', (event) => event.preventDefault());
+		pickBtn.addEventListener('click', async (event) => {
+			event.preventDefault();
+			const selectedText = toolbar.dataset.selectionText ?? '';
+			const messageId = toolbar.dataset.messageId || undefined;
+			if (!selectedText) {
+				return;
+			}
+			await this.createPickForText({
+				raw: selectedText,
+				plain: selectedText,
+				matchText: selectedText,
+				messageId,
+			});
+			this.hideSelectionToolbar();
+			window.getSelection()?.removeAllRanges();
+		});
+
+		const copyBtn = toolbar.createEl('button', {
+			cls: 'youmind-selection-toolbar-btn clickable-icon',
+			attr: { 'aria-label': '复制' },
+		});
+		setIcon(copyBtn, 'copy');
+		copyBtn.createSpan({ text: '复制' });
+		copyBtn.addEventListener('mousedown', (event) => event.preventDefault());
+		copyBtn.addEventListener('click', async (event) => {
+			event.preventDefault();
+			const selectedText = toolbar.dataset.selectionText ?? '';
+			if (!selectedText) {
+				return;
+			}
+			await navigator.clipboard.writeText(selectedText);
+			new Notice('Copied selection');
+			this.hideSelectionToolbar();
+		});
+
+		this.selectionToolbarEl = toolbar;
+		return toolbar;
+	}
+
+	private hideSelectionToolbar(): void {
+		if (this.selectionToolbarEl) {
+			this.selectionToolbarEl.addClass('youmind-hidden');
+			delete this.selectionToolbarEl.dataset.selectionText;
+			delete this.selectionToolbarEl.dataset.messageId;
+		}
+	}
+
+	private getAvailableNotePath(baseName: string): string {
+		let candidate = `${baseName}.md`;
+		let counter = 1;
+		while (this.app.vault.getAbstractFileByPath(candidate)) {
+			candidate = `${baseName} ${counter}.md`;
+			counter += 1;
+		}
+		return candidate;
 	}
 
 	private addSystemMessage(text: string, iconName: string): void {
@@ -1428,6 +1750,8 @@ class YouMindChatView extends ItemView {
 	}
 
 	async onClose(): Promise<void> {
+		this.selectionToolbarEl?.remove();
+		this.selectionToolbarEl = null;
 		this.historyPanel?.destroy();
 		this.boardSelector?.destroy();
 		this.unsubscribeBoardChange?.();

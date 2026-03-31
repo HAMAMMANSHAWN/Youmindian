@@ -118,6 +118,27 @@ export interface SendMessageParams {
 	atReferences?: string[];
 }
 
+export interface CreatePickParams {
+	boardId: string;
+	content: {
+		raw: string;
+		plain?: string;
+	};
+	source?: {
+		entityType: 'chat';
+		entityId: string;
+		selection?: {
+			matchText: string;
+			selectedBy: 'USER';
+			pickSelectionMessageId?: string;
+		};
+		quote?: {
+			raw: string;
+			plain: string;
+		};
+	};
+}
+
 interface ListChatsOptions {
 	boardId?: string;
 	page?: number;
@@ -172,6 +193,7 @@ interface RawMessage {
 	updated_at?: string;
 	updatedAt?: string;
 	content?: string;
+	message?: string;
 	text?: string;
 	blocks?: Array<{ type?: string; data?: string; [key: string]: unknown }>;
 	status?: string;
@@ -324,6 +346,8 @@ function normalizeMessage(raw: RawMessage): Message {
 		content:
 			typeof raw.content === 'string'
 				? raw.content
+				: typeof raw.message === 'string'
+					? raw.message
 				: typeof raw.text === 'string'
 					? raw.text
 					: '',
@@ -492,5 +516,9 @@ export class YouMindAPI {
 		} catch {
 			return false;
 		}
+	}
+
+	async createPick(params: CreatePickParams): Promise<{ id: string }> {
+		return this.request<{ id: string }>('/createPick', params as unknown as Record<string, unknown>);
 	}
 }
