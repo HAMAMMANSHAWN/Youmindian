@@ -1,13 +1,13 @@
-# YouMindian
+# youmindian
 
-**YouMindian 是一个让 YouMind 云端 AI Agent 能够操控本地 Obsidian Vault 的桥梁插件。**  
-它把一个原本只能在浏览器里用的 Web AI，变成了一个能读写本地知识库、组织笔记工作流、同时保留 YouMind 云端能力的 Obsidian 插件。
+**youmindian 是一个连接 YouMind 云端 AI 与本地 Obsidian Vault 的桥梁插件。**  
+YouMind Agent 在云端思考，插件负责把结果安全地落到本地 Vault。
 
 ## 一句话定义
 
-**YouMindian = YouMind 的云端大脑 + Obsidian 的本地文件系统 + 插件桥梁层。**
+**youmindian = YouMind 的云端大脑 + Obsidian 的本地文件系统 + 插件桥梁层。**
 
-它不是一个普通聊天面板，而是一个双向桥接系统：
+它不是单纯把聊天窗口搬进 Obsidian，而是在云端 AI 和本地知识库之间搭了一层真正可执行的桥：
 
 - 云端 AI 可以理解并利用 YouMind 的 Board、素材、Craft、语义搜索、多模型和工具链
 - 本地插件可以把 AI 的意图安全地落地到 Obsidian Vault
@@ -40,7 +40,7 @@ Obsidian 是一个**本地优先的私人知识库**，它擅长：
 
 ### 我们要解决的问题
 
-这个插件要把两者接起来：
+这个插件想解决的，就是把两者真正连起来：
 
 - 让 YouMind 的云端 Agent 能安全地影响本地 Vault
 - 让 Obsidian 的本地内容进入 YouMind 的 Board / Document / Note 体系
@@ -50,12 +50,12 @@ Obsidian 是一个**本地优先的私人知识库**，它擅长：
 
 ### 总体思路
 
-我们采用的是 **Bridge Layer（桥梁层）** 架构：
+整体上，我们采用的是 **Bridge Layer（桥梁层）** 架构：
 
 1. YouMind Agent 在云端思考、规划、调用云端工具
 2. 插件通过 OpenAPI 与云端交互
 3. 插件在本地解释 AI 的输出与意图
-4. 本地 Vault 操作由插件安全执行，而不是让云端 AI 直接拥有文件系统权限
+4. 本地 Vault 操作由插件安全执行，而不是让云端 Agent 直接拥有文件系统权限
 
 ### 架构全景
 
@@ -72,15 +72,15 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 
 ### Bridge Layer 为什么重要
 
-这层是插件的心脏。
+这层是整个插件最关键的部分。
 
-与本地 CLI Agent 方案不同，这个项目不直接在用户电脑上 spawn 一个云端模型的本地代理，而是：
+和本地 CLI Agent 那类方案不一样，这个项目不会在用户电脑上直接拉起一个能碰文件系统的模型代理，而是：
 
 - 用 YouMind OpenAPI 调用云端 Agent
 - 让插件负责“解释”和“执行”
 - 让所有本地写入都经过插件控制
 
-好处是：
+这样做有几个直接的好处：
 
 - 更安全：AI 不直接拥有本地文件系统权限
 - 更灵活：不绑定单一模型
@@ -108,7 +108,7 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 
 - 右侧栏 YouMind Chat 面板
 - YouMind OpenAPI 客户端
-- `x-api-key` 主鉴权 + `Authorization: Bearer` 兼容
+- `x-api-key` 主鉴权 + `Authorization: Bearer` 回退兼容
 - Chat / Agent 模式切换
 - 多模型选择器
 - Markdown 渲染
@@ -130,7 +130,7 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 - Pull 完成确认浮层（支持查看路径、移动到其他文件夹）
 - 图片 Material 本地下载与正文内联图片本地化
 - Slides / Webpage / AudioPod / Canvas Craft 导出
-- 从 Pull 回来的 Note 再 Push 时的覆盖 / 新建选择弹窗
+- Pull 回来的 Note 再 Push 时的覆盖 / 新建选择弹窗
 - 提交前敏感信息检查脚本
 
 ### 已验证的重要 API 结论
@@ -139,6 +139,7 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 - `Authorization: Bearer` 单独使用时曾返回 `401`
 - assistant 回复正文需要优先从 `blocks[].data` 提取
 - chat 类请求对外统一使用 `snake_case` 字段更稳妥
+- 当前外部 OpenAPI 以现有 POST 接口为主，而不是 RESTful `/chats/...` 资源路径
 
 ## 5 分钟快速上手
 
@@ -179,23 +180,23 @@ npm run dev
 
 ### 5. 体验当前核心功能
 
-你现在应该能直接体验：
+现在已经可以直接体验这些核心能力：
 
 - 发送真实 YouMind Chat / Agent 消息
 - 切换模型
 - 切换 Board 上下文
 - 打开历史对话面板并恢复旧会话
 - 浏览当前 Board 下的 Materials / Crafts，并按类型预览内容
-- 将 Material / Craft Pull 到本地 Vault，自动建立 frontmatter 关联
-- 将消息保存到本地 Vault 或双写为 YouMind Note
+- 将 Material / Craft Pull 到本地 Vault，并自动建立 frontmatter 关联
+- 将消息保存到本地 Vault，或双写为 YouMind Note
 - 将当前笔记推送到 YouMind，并查看同步状态
-- 在 Pull 图片、Article、PDF 时尽量将图片落到本地附件目录
-- 将 Slides / Webpage / AudioPod / Canvas Craft 也导出到本地
-- 对从 YouMind Pull 回来的 Note，Push 时可选择覆盖原条目或新建条目
+- 在 Pull 图片、Article、PDF 时尽量把图片一起落到本地附件目录
+- 将 Slides / Webpage / AudioPod / Canvas 这些 Craft 也导出到本地
+- 对从 YouMind Pull 回来的 Note，Push 时选择覆盖原条目或新建条目
 
 ## 界面导览
 
-当前侧边栏主要由四个区域组成：
+当前侧边栏主要分成四个区域：
 
 ### Header
 
@@ -208,7 +209,7 @@ npm run dev
 
 - 用户消息右对齐
 - AI 消息左对齐并支持 Markdown 渲染
-- 系统消息用于提示 Board 切换、错误和加载结果
+- 系统消息用于提示 Board 切换、错误和加载状态
 
 ### Context Bar
 
@@ -222,6 +223,11 @@ npm run dev
 - Ask / Agent 模式切换
 - 多行输入框
 - 发送按钮
+
+其中：
+
+- `ask` = 简单问答，不使用工具
+- `agent` = 完整 Agent 模式，可结合 YouMind 工具链
 
 ### History Panel（Phase 1.2）
 
@@ -244,8 +250,8 @@ npm run dev
 
 - 新增 `api.ts`
 - 接入 `createChat` / `sendMessage`
-- 支持真实 API 调用而不是本地 echo
-- 处理 loading、错误提示、Markdown 渲染、复制回复
+- 从本地假数据切换到真实 API 调用
+- 补齐 loading、错误提示、Markdown 渲染、复制回复
 
 ### Phase 1.1：Board Selector 接入 Chat View
 
@@ -257,12 +263,12 @@ npm run dev
 
 ### Phase 1.2：History Panel 接入 Chat View
 
-- 将旧的顶部覆盖式历史层升级为左侧滑入式 History Panel
+- 将原本顶部覆盖式的历史层升级为左侧滑入式 History Panel
 - 支持按当前 Board 拉取历史对话
 - 支持本地搜索、分页加载、恢复历史消息
 - 支持 unread 标记、active 状态、answering / thinking 状态指示
 - 支持本地隐藏会话，不删除云端记录
-- 保持与 Board 切换行为一致：切换 Board 后当前对话立即 reset
+- 保持与 Board 切换行为一致：切换 Board 后当前对话立即重置
 
 ### Phase 1.3：内容双向流动基础能力
 
@@ -272,13 +278,13 @@ npm run dev
 - 实现 `getSyncStatus(file)`，区分 `unlinked` / `synced` / `modified`
 - 提供 3 个 Push 入口：命令面板、文件管理器右键、编辑器状态按钮
 - 新增保存确认浮层，支持查看目标 Board、切换 Board、跳转 YouMind
-- 补齐 `listMaterials` / `listCrafts` API，为后续 Browser / Pull 能力铺路
+- 补齐 `listMaterials` / `listCrafts` API，为后续 Browser / Pull 链路打基础
 
 ### Phase 1.3.2：Board Content Browser
 
 - 新增 Browser View，按当前 Board 展示 Materials / Crafts 树
 - 支持分组展开、图标映射、基础搜索与刷新
-- 增加 Preview Panel，为后续 Pull 与类型化预览打基础
+- 增加 Preview Panel，为后续 Pull 和类型化预览打基础
 
 ### Phase 1.3.3：Pull to Vault
 
@@ -286,7 +292,7 @@ npm run dev
 - Preview Panel 按类型分发渲染：文本走 Markdown，图片直接预览，媒体显示摘要与转录
 - 打通 `getMaterial` / `getCraft` 到本地 Markdown 的转换链路
 - 新增 Pull to Vault，支持将 Material / Craft 拉取到 Vault 并写入 frontmatter 关联
-- 新增 Pull Confirm Panel，拉取后可查看目标路径并移动到 Vault 内其他文件夹
+- 新增 Pull Confirm Panel，拉取后可查看目标路径，并移动到 Vault 内其他文件夹
 
 ### Phase 1.3.4：图片本地下载增强
 
@@ -297,7 +303,7 @@ npm run dev
 ### Phase 1.3.5：Craft Pull 扩展
 
 - 将 Craft Pull 从 `page` 扩展到 `slides`、`webpage`、`audio-pod`、`canvas`
-- Slides 导出支持解析场景结构、抽取 `KEY CONTENT`，并尽量下载缩略图到本地附件目录
+- Slides 导出支持解析场景结构、抽取 `KEY CONTENT`，并尽量把缩略图下载到本地附件目录
 - Webpage 导出支持保留截图、HTML 源码链接和可提取文本内容
 - AudioPod / Canvas 采用防御性文本提取策略，未知结构时静默回退到链接模板
 - Browser View 同步开放以上 Craft 类型的 Pull 按钮与基础预览
@@ -307,7 +313,7 @@ npm run dev
 - 当本地文件来自 YouMind Pull 的 Note 时，Push 前弹出选择：覆盖原云端 Note 或新建一条新的 YouMind Note
 - 新增 Push 取消分支，用户取消后不再弹出失败提示
 - 对原本由 Push 创建的 Note，继续优先走更新链路
-- 覆盖更新失败时自动回退为新建 Note，尽量保证 Push 成功
+- 覆盖更新失败时自动回退为新建 Note，尽量把 Push 做成功
 
 ## 当前文件结构
 
