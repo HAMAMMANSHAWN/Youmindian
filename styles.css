@@ -527,6 +527,210 @@
 	animation-delay: 0.2s;
 }
 
+/* ============================================
+   Save Confirm Panel
+   ============================================ */
+
+.youmind-save-confirm {
+	position: fixed;
+	top: 16px;
+	right: 16px;
+	z-index: 9999;
+	width: 320px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+	padding: 12px 16px;
+	animation: youmind-fade-in 200ms ease-out;
+	font-size: var(--font-ui-small);
+}
+
+.youmind-save-confirm.is-closing {
+	animation: youmind-fade-out 200ms ease-in forwards;
+}
+
+.youmind-save-confirm-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+
+.youmind-save-confirm-icon {
+	color: var(--color-green, var(--text-accent));
+	--icon-size: 18px;
+	flex-shrink: 0;
+}
+
+.youmind-save-confirm-label {
+	flex: 1;
+	font-weight: 500;
+	color: var(--text-normal);
+}
+
+.youmind-save-confirm-close {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-muted);
+	padding: 2px;
+	border-radius: 4px;
+	--icon-size: 14px;
+}
+
+.youmind-save-confirm-close:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.youmind-save-confirm-board-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.youmind-save-confirm-board-btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 6px 10px;
+	cursor: pointer;
+	flex: 1;
+	min-width: 0;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+
+.youmind-save-confirm-board-btn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.youmind-board-icon {
+	--icon-size: 16px;
+	flex-shrink: 0;
+}
+
+.youmind-board-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 500;
+}
+
+.youmind-board-chevron {
+	--icon-size: 14px;
+	color: var(--text-muted);
+	flex-shrink: 0;
+	transition: transform 150ms ease;
+}
+
+.youmind-save-confirm-board-btn.is-open .youmind-board-chevron {
+	transform: rotate(180deg);
+}
+
+.youmind-save-confirm-open-btn {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 6px;
+	padding: 6px 12px;
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.youmind-save-confirm-open-btn:hover {
+	opacity: 0.9;
+}
+
+.youmind-save-confirm-dropdown {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background: var(--background-primary);
+	margin-bottom: 8px;
+	max-height: 280px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.youmind-save-confirm-search {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.youmind-save-confirm-search .svg-icon {
+	--icon-size: 14px;
+	color: var(--text-muted);
+	flex-shrink: 0;
+}
+
+.youmind-save-confirm-search input {
+	border: none;
+	background: none;
+	outline: none;
+	flex: 1;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+
+.youmind-save-confirm-board-list {
+	overflow-y: auto;
+	max-height: 220px;
+}
+
+.youmind-save-confirm-board-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	cursor: pointer;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+
+.youmind-save-confirm-board-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.youmind-save-confirm-board-item.is-current {
+	background: var(--background-secondary);
+}
+
+.youmind-save-confirm-board-item .youmind-board-check {
+	--icon-size: 14px;
+	color: var(--color-green, var(--text-accent));
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
+.youmind-save-confirm-timer {
+	text-align: right;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+
+.youmind-save-confirm-loading .youmind-board-icon {
+	animation: youmind-spin 1s linear infinite;
+}
+
+.youmind-save-confirm-error .youmind-save-confirm-icon {
+	color: var(--text-error, var(--color-red, var(--text-accent)));
+}
+
 .youmind-loading-dots span:nth-child(3) {
 	animation-delay: 0.4s;
 }

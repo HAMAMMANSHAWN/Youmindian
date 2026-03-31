@@ -19,7 +19,10 @@ export interface Board {
 	id: string;
 	name: string;
 	description?: string;
-	icon?: string;
+	icon?: {
+		name?: string;
+		color?: string;
+	} | string;
 	coverUrl?: string;
 	isDefault?: boolean;
 	createdAt?: string;
@@ -139,6 +142,66 @@ export interface CreatePickParams {
 	};
 }
 
+export interface NoteDto {
+	id: string;
+	title: string;
+	content: string;
+	type: string;
+	boardId?: string;
+	position?: {
+		boardId: string;
+		rank: string;
+		boardItemId: string;
+	};
+}
+
+export interface MaterialListItem {
+	boardItemId: string;
+	entityType: string;
+	entity: {
+		id: string;
+		type: string;
+		title: string;
+		content?: string;
+		url?: string;
+		updatedAt?: string;
+		visibility?: string;
+	};
+	parentBoardGroupId?: string;
+	rank?: string;
+}
+
+export interface MaterialDto {
+	id: string;
+	type: string;
+	title: string;
+	content?: string;
+	url?: string;
+	blocks?: Array<Record<string, unknown>>;
+	updatedAt?: string;
+	[key: string]: unknown;
+}
+
+export interface CraftDto {
+	id: string;
+	type: string;
+	title: string;
+	content?: string;
+	boardId?: string;
+	groupId?: string;
+	updatedAt?: string;
+	[key: string]: unknown;
+}
+
+export interface SearchResult {
+	id: string;
+	type: string;
+	title: string;
+	snippet?: string;
+	score?: number;
+	[key: string]: unknown;
+}
+
 interface ListChatsOptions {
 	boardId?: string;
 	page?: number;
@@ -149,7 +212,7 @@ interface RawBoard {
 	id?: string;
 	name?: string;
 	description?: string;
-	icon?: string;
+	icon?: string | { name?: string; color?: string; [key: string]: unknown };
 	cover_url?: string;
 	coverUrl?: string;
 	is_default?: boolean;
@@ -206,7 +269,15 @@ function normalizeBoard(raw: RawBoard): Board {
 		id: raw.id ?? '',
 		name: raw.name ?? 'Untitled board',
 		description: typeof raw.description === 'string' ? raw.description : undefined,
-		icon: typeof raw.icon === 'string' ? raw.icon : undefined,
+		icon:
+			typeof raw.icon === 'string'
+				? raw.icon
+				: raw.icon && typeof raw.icon === 'object'
+					? {
+							name: typeof raw.icon.name === 'string' ? raw.icon.name : undefined,
+							color: typeof raw.icon.color === 'string' ? raw.icon.color : undefined,
+						}
+					: undefined,
 		coverUrl:
 			typeof raw.coverUrl === 'string'
 				? raw.coverUrl
@@ -475,12 +546,23 @@ export class YouMindAPI {
 		};
 	}
 
-	async listBoards(forceRefresh = false): Promise<Board[]> {
+	async listBoards(
+		options?: boolean | { status?: string; fuzzyName?: string; withFavorite?: boolean; forceRefresh?: boolean },
+	): Promise<Board[]> {
+		const forceRefresh = typeof options === 'boolean' ? options : (options?.forceRefresh ?? false);
 		if (!forceRefresh && isCacheValid(boardListCache)) {
 			return boardListCache.data;
 		}
 
-		const raw = await this.request<RawBoard[] | { data?: RawBoard[] }>('/listBoards', {});
+		const requestBody =
+			typeof options === 'boolean' || !options
+				? {}
+				: {
+						status: options.status,
+						fuzzy_name: options.fuzzyName,
+						with_favorite: options.withFavorite,
+					};
+		const raw = await this.request<RawBoard[] | { data?: RawBoard[] }>('/listBoards', requestBody);
 		const boards = (Array.isArray(raw) ? raw : Array.isArray(raw.data) ? raw.data : []).map(normalizeBoard);
 		boardListCache = { data: boards, timestamp: Date.now() };
 		return boards;
@@ -520,5 +602,109 @@ export class YouMindAPI {
 
 	async createPick(params: CreatePickParams): Promise<{ id: string }> {
 		return this.request<{ id: string }>('/createPick', params as unknown as Record<string, unknown>);
+	}
+
+	async createNote(params: {
+		content: string;
+		title?: string;
+		boardId?: string;
+		parentBoardGroupId?: string;
+		genTitle?: boolean;
+	}): Promise<NoteDto> {
+		return this.request<NoteDto>('/createNote', {
+			content: params.content,
+			title: params.title,
+			board_id: params.boardId,
+			parent_board_group_id: params.parentBoardGroupId,
+			gen_title: params.genTitle,
+		});
+	}
+
+	async updateNote(params: {
+		id: string;
+		title?: string;
+		content?: string;
+		titleType?: 'default' | 'ai' | 'manual';
+	}): Promise<NoteDto> {
+		return this.request<NoteDto>('/updateNote', {
+			id: params.id,
+			title: params.title,
+			content: params.content,
+			title_type: params.titleType,
+		});
+	}
+
+	async listMaterials(params: { boardId: string; groupId?: string }): Promise<MaterialListItem[]> {
+		const raw = await this.request<Array<Record<string, unknown>>>('/listMaterials', {
+			board_id: params.boardId,
+			group_id: params.groupId,
+		});
+		return raw.map((item) => ({
+			boardItemId: typeof item.boardItemId === 'string' ? item.boardItemId : typeof item.board_item_id === 'string' ? item.board_item_id : '',
+			entityType: typeof item.entityType === 'string' ? item.entityType : typeof item.entity_type === 'string' ? item.entity_type : '',
+			entity: typeof item.entity === 'object' && item.entity ? (item.entity as MaterialListItem['entity']) : { id: '', type: '', title: 'Untitled' },
+			parentBoardGroupId:
+				typeof item.parentBoardGroupId === 'string'
+					? item.parentBoardGroupId
+					: typeof item.parent_board_group_id === 'string'
+						? item.parent_board_group_id
+						: undefined,
+			rank: typeof item.rank === 'string' ? item.rank : undefined,
+		}));
+	}
+
+	async getMaterial(params: { id: string; includeBlocks?: boolean }): Promise<MaterialDto> {
+		return this.request<MaterialDto>('/getMaterial', {
+			id: params.id,
+			include_blocks: params.includeBlocks,
+		});
+	}
+
+	async listCrafts(params: { boardId: string; groupId?: string }): Promise<CraftDto[]> {
+		return this.request<CraftDto[]>('/listCrafts', {
+			board_id: params.boardId,
+			group_id: params.groupId,
+		});
+	}
+
+	async getCraft(params: { id: string; withChildren?: boolean }): Promise<CraftDto> {
+		return this.request<CraftDto>('/getCraft', {
+			id: params.id,
+			with_children: params.withChildren,
+		});
+	}
+
+	async moveMaterials(params: {
+		items: Array<{
+			id: string;
+			boardId: string;
+			groupId?: string;
+		}>;
+	}): Promise<{
+		successCount: number;
+		failedCount: number;
+		failures?: string[];
+	}> {
+		return this.request('/moveMaterials', {
+			items: params.items.map((item) => ({
+				id: item.id,
+				board_id: item.boardId,
+				group_id: item.groupId,
+			})),
+		});
+	}
+
+	async search(params: {
+		scope: 'library' | 'board';
+		query: string;
+		boardId?: string;
+		topK?: number;
+	}): Promise<{ results: SearchResult[]; total: number }> {
+		return this.request<{ results: SearchResult[]; total: number }>('/search', {
+			scope: params.scope,
+			query: params.query,
+			board_id: params.boardId,
+			top_k: params.topK,
+		});
 	}
 }
