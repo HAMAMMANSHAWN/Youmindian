@@ -1,11 +1,11 @@
-# YouMind for Obsidian
+# YouMindian
 
-**YouMind for Obsidian 是一个让 YouMind 云端 AI Agent 能够操控本地 Obsidian Vault 的桥梁插件。**  
+**YouMindian 是一个让 YouMind 云端 AI Agent 能够操控本地 Obsidian Vault 的桥梁插件。**  
 它把一个原本只能在浏览器里用的 Web AI，变成了一个能读写本地知识库、组织笔记工作流、同时保留 YouMind 云端能力的 Obsidian 插件。
 
 ## 一句话定义
 
-**YouMind for Obsidian = YouMind 的云端大脑 + Obsidian 的本地文件系统 + 插件桥梁层。**
+**YouMindian = YouMind 的云端大脑 + Obsidian 的本地文件系统 + 插件桥梁层。**
 
 它不是一个普通聊天面板，而是一个双向桥接系统：
 
