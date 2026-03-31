@@ -4,7 +4,7 @@ import { BoardContext } from './board-context';
 import { BrowserView } from './browser-view';
 import { YouMindChatView } from './chat-view';
 import { FrontmatterManager, type SyncStatus } from './frontmatter-manager';
-import { pushCurrentNoteToYouMind, pushFileToYouMind, showPushSuccessPanel } from './push-service';
+import { isPushCanceledError, pushCurrentNoteToYouMind, pushFileToYouMind, showPushSuccessPanel } from './push-service';
 import { YouMindSettingTab } from './settings-tab';
 import {
 	DEFAULT_SETTINGS,
@@ -88,6 +88,9 @@ export default class YouMindPlugin extends Plugin {
 									return showPushSuccessPanel(this, file, result).finally(() => this.refreshPushAction());
 								})
 								.catch((error) => {
+									if (isPushCanceledError(error)) {
+										return;
+									}
 									new Notice(`Push failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
 								});
 						}),

@@ -129,6 +129,8 @@ YouMind Cloud (API)              Plugin (Bridge)                Obsidian Vault (
 - Pull to Vault（Material / Craft 拉取为本地 Markdown）
 - Pull 完成确认浮层（支持查看路径、移动到其他文件夹）
 - 图片 Material 本地下载与正文内联图片本地化
+- Slides / Webpage / AudioPod / Canvas Craft 导出
+- 从 Pull 回来的 Note 再 Push 时的覆盖 / 新建选择弹窗
 - 提交前敏感信息检查脚本
 
 ### 已验证的重要 API 结论
@@ -188,6 +190,8 @@ npm run dev
 - 将消息保存到本地 Vault 或双写为 YouMind Note
 - 将当前笔记推送到 YouMind，并查看同步状态
 - 在 Pull 图片、Article、PDF 时尽量将图片落到本地附件目录
+- 将 Slides / Webpage / AudioPod / Canvas Craft 也导出到本地
+- 对从 YouMind Pull 回来的 Note，Push 时可选择覆盖原条目或新建条目
 
 ## 界面导览
 
@@ -289,6 +293,21 @@ npm run dev
 - Pull 图片类 Material 时，优先下载到 Vault 本地附件目录并改写为相对路径引用
 - 处理 Article / PDF 正文中的远程内联图片，尽量同步为本地附件
 - 下载失败时静默回退到远程 URL，不中断整体 Pull 流程
+
+### Phase 1.3.5：Craft Pull 扩展
+
+- 将 Craft Pull 从 `page` 扩展到 `slides`、`webpage`、`audio-pod`、`canvas`
+- Slides 导出支持解析场景结构、抽取 `KEY CONTENT`，并尽量下载缩略图到本地附件目录
+- Webpage 导出支持保留截图、HTML 源码链接和可提取文本内容
+- AudioPod / Canvas 采用防御性文本提取策略，未知结构时静默回退到链接模板
+- Browser View 同步开放以上 Craft 类型的 Pull 按钮与基础预览
+
+### Phase 1.3.6：Pull Note 再 Push 保护
+
+- 当本地文件来自 YouMind Pull 的 Note 时，Push 前弹出选择：覆盖原云端 Note 或新建一条新的 YouMind Note
+- 新增 Push 取消分支，用户取消后不再弹出失败提示
+- 对原本由 Push 创建的 Note，继续优先走更新链路
+- 覆盖更新失败时自动回退为新建 Note，尽量保证 Push 成功
 
 ## 当前文件结构
 
