@@ -83,7 +83,12 @@ export class PullService {
 							this.imageDownloader,
 							estimatedMdPath,
 						)
-					: this.converter.craftToMarkdown(detail, boardId);
+					: await this.converter.craftToMarkdown(
+							detail,
+							boardId,
+							this.imageDownloader,
+							estimatedMdPath,
+						);
 
 			const filePath = await this.writeFile(converted, boardName);
 			return {
@@ -199,7 +204,12 @@ export class PullService {
 						this.imageDownloader,
 						existingFile.path,
 					)
-				: this.converter.craftToMarkdown(detail, boardId);
+				: await this.converter.craftToMarkdown(
+						detail,
+						boardId,
+						this.imageDownloader,
+						existingFile.path,
+					);
 
 		await this.app.vault.modify(existingFile, stripFrontmatter(converted.markdown));
 		await this.plugin.frontmatterManager.write(existingFile, converted.frontmatter);

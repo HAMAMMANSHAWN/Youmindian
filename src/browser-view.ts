@@ -29,7 +29,7 @@ const PULLABLE_MATERIAL_TYPES = new Set([
 	'unknown-webpage',
 	'snippet',
 ]);
-const PULLABLE_CRAFT_TYPES = new Set(['page']);
+const PULLABLE_CRAFT_TYPES = new Set(['page', 'slides', 'webpage', 'audio-pod', 'canvas']);
 
 const MATERIAL_ICON_MAP: Record<string, string> = {
 	article: 'globe',
@@ -589,8 +589,33 @@ export class BrowserView extends ItemView {
 				if (this.currentPreviewId !== node.id) {
 					return;
 				}
-				const content = trimPreview(this.extractCraftPreview(detail), 20000) ?? 'No content available';
-				await this.renderMarkdownPreview(content);
+				const detailRecord = isRecord(detail) ? detail : null;
+				if (!detailRecord) {
+					this.renderFallbackPreview(node);
+					return;
+				}
+				const craftType = readString(detailRecord, 'type') ?? node.craftType ?? '';
+				switch (craftType) {
+					case 'webpage':
+						this.renderCraftImagePreview(node, detailRecord, 'screenshot');
+						break;
+					case 'slides':
+						this.renderSlidesPreview(node, detailRecord);
+						break;
+					case 'audio-pod':
+					case 'canvas': {
+						const content =
+							trimPreview(this.extractCraftPreview(detail), 20000) ?? 'No content available';
+						await this.renderMarkdownPreview(content);
+						break;
+					}
+					default: {
+						const content =
+							trimPreview(this.extractCraftPreview(detail), 20000) ?? 'No content available';
+						await this.renderMarkdownPreview(content);
+						break;
+					}
+				}
 				return;
 			}
 
@@ -1028,11 +1053,133 @@ export class BrowserView extends ItemView {
 		if (!record) {
 			return undefined;
 		}
+		const craftType = readString(record, 'type') ?? '';
+		if (craftType === 'slides') {
+			return this.extractSlidesPreview(record);
+		}
+		if (craftType === 'webpage') {
+			return (
+				readContentText(record.content) ??
+				readString(record, 'contentUrl', 'content_url') ??
+				readString(record, 'description', 'text')
+			);
+		}
 		const direct = readContentText(record.content);
 		if (direct) {
 			return direct;
 		}
 		return readString(record, 'description', 'text');
+	}
+
+	private extractSlidesPreview(record: Record<string, unknown>): string | undefined {
+		const rawContent = isRecord(record.content) ? record.content.raw : record.content;
+		if (typeof rawContent !== 'string') {
+			return readString(record, 'description', 'text');
+		}
+		try {
+			const parsed = JSON.parse(rawContent);
+			if (!isRecord(parsed) || !isRecord(parsed.timeline) || !Array.isArray(parsed.timeline.scenes)) {
+				return rawContent;
+			}
+
+			const sceneLines = parsed.timeline.scenes
+				.map((scene, index) => {
+					if (!isRecord(scene)) {
+						return `Scene ${index + 1}`;
+					}
+					const mediaAssets = Array.isArray(scene.mediaAssets) ? scene.mediaAssets : [];
+					const firstAsset = mediaAssets[0];
+					const genMedia = isRecord(firstAsset) && isRecord(firstAsset.genMedia) ? firstAsset.genMedia : null;
+					const title = genMedia ? readString(genMedia, 'title') : undefined;
+					return `${index + 1}. ${title ?? `Scene ${index + 1}`}`;
+				})
+				.filter((line) => line.trim().length > 0);
+
+			return sceneLines.length > 0 ? sceneLines.join('\n') : rawContent;
+		} catch {
+			return rawContent;
+		}
+	}
+
+	private renderCraftImagePreview(
+		node: TreeNode,
+		craft: Record<string, unknown>,
+		imageKey: string,
+	): void {
+		this.resetPreviewBodyClasses();
+		this.previewBodyEl.empty();
+		this.previewBodyEl.addClass('is-image-preview');
+
+		const imageUrl = readString(craft, imageKey);
+		const description = this.extractCraftPreview(craft as unknown as CraftDto);
+		if (imageUrl) {
+			const imageContainer = this.previewBodyEl.createDiv({ cls: 'youmind-preview-image-container' });
+			const imageEl = imageContainer.createEl('img', {
+				attr: {
+					src: imageUrl,
+					alt: node.title || readString(craft, 'title') || 'Craft preview',
+				},
+			});
+			imageEl.addEventListener('error', () => {
+				imageContainer.empty();
+				imageContainer.setText('Preview failed to load');
+				imageContainer.addClass('is-error');
+			});
+		}
+
+		if (description) {
+			this.previewBodyEl.createDiv({
+				cls: 'youmind-preview-image-desc',
+				text: description,
+			});
+		}
+
+		const contentUrl = readString(craft, 'contentUrl', 'content_url');
+		if (contentUrl) {
+			const linkEl = this.previewBodyEl.createEl('a', {
+				cls: 'youmind-preview-source-btn',
+				attr: {
+					href: contentUrl,
+					target: '_blank',
+					rel: 'noopener noreferrer',
+				},
+			});
+			const iconEl = linkEl.createSpan();
+			setIcon(iconEl, 'external-link');
+			linkEl.createSpan({ text: 'Open HTML Source' });
+		}
+	}
+
+	private renderSlidesPreview(node: TreeNode, craft: Record<string, unknown>): void {
+		this.resetPreviewBodyClasses();
+		this.previewBodyEl.empty();
+		const rawContent = isRecord(craft.content) ? craft.content.raw : craft.content;
+		if (typeof rawContent !== 'string') {
+			this.previewBodyEl.setText('No slides preview available');
+			return;
+		}
+
+		try {
+			const parsed = JSON.parse(rawContent);
+			if (!isRecord(parsed) || !isRecord(parsed.timeline) || !Array.isArray(parsed.timeline.scenes)) {
+				this.previewBodyEl.setText('No slides preview available');
+				return;
+			}
+
+			const firstScene = parsed.timeline.scenes[0];
+			const mediaAssets = isRecord(firstScene) && Array.isArray(firstScene.mediaAssets) ? firstScene.mediaAssets : [];
+			const firstAsset = mediaAssets[0];
+			const genMedia = isRecord(firstAsset) && isRecord(firstAsset.genMedia) ? firstAsset.genMedia : null;
+			const imageUrl = genMedia ? readString(genMedia, 'playUrl', 'play_url') : undefined;
+			if (imageUrl) {
+				this.renderCraftImagePreview(node, { ...craft, screenshot: imageUrl }, 'screenshot');
+				return;
+			}
+		} catch {
+			// fall back below
+		}
+
+		void this.renderMarkdownPreview(trimPreview(this.extractCraftPreview(craft as unknown as CraftDto), 20000) ?? 'No content available');
 	}
 
 	private resetPreviewBodyClasses(): void {
