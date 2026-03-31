@@ -18,6 +18,12 @@ main.js
 # obsidian
 data.json
 .specstory/
+.env
+.env.*
+*.local
+secrets.local
+*.pem
+*.key
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store

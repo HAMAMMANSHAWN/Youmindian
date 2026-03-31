@@ -259,6 +259,19 @@ youmind_synced_at: "ISO8601"
 ```bash
 npm run dev
 npm run build
+npm run check:secrets
+```
+
+### Pre-commit safety check
+
+Before commit or push:
+
+1. Run `git status --short` and confirm you are only staging intended files.
+2. Run `npm run check:secrets` to catch likely PATs, API keys, auth tokens, and private keys in tracked files.
+3. Prefer targeted staging such as `git add main.ts api.ts styles.css` instead of `git add -A`.
+4. Never commit local plugin state or session logs. Keep files like `data.json`, `.specstory/`, `.env*`, and `*.local` out of git.
+5. If a real token or API key was ever pasted into a tracked file, rotate it even if you later delete it.
+npm run build
 ```
 
 After code changes, reload Obsidian with `Cmd+P` → `Reload app without saving`.
